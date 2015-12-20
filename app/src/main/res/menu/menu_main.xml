@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto" tools:context=".MainActivity">
+    <item
+        android:id="@+id/about"
+        android:icon="@drawable/about"
+        app:showAsAction="always"
+        android:title="File">
+    </item>
+
+</menu>

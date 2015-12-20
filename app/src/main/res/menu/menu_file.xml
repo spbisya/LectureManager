@@ -1,0 +1,22 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto" tools:context=".FileBrowser">
+    <item
+        android:id="@+id/newf"
+        android:icon="@drawable/new_file"
+        app:showAsAction="never"
+        android:title="File">
+    </item>
+    <item
+        android:id="@+id/about"
+        android:icon="@drawable/about"
+        app:showAsAction="always"
+        android:title="Main">
+    </item>
+    <item
+        android:id="@+id/paste"
+        app:showAsAction="never"
+        android:title="Paste">
+    </item>
+
+</menu>

@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">LectureManager</string>
+    <string-array name="file_options">
+        <item>Rename</item>
+        <item>Delete</item>
+        <item>Cut</item>
+        <item>Copy</item>
+        <item>Send To...</item>
+    </string-array>
+    <string-array name="grid_options">
+        <item>Paste</item>
+    </string-array>
+</resources>
