@@ -11,6 +11,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
+import android.widget.ZoomControls;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -26,6 +27,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     FancyButton capture;
     FancyButton cancel;
     String path;
+    int maxZoomLevel=0,currentZoomLevel=0;
+    Camera.Parameters p;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,13 +132,73 @@ if (data!=null){this.data = data; return true;}
         }
         // stop preview before making changes
         try {
+
             camera.stopPreview();
+            ZoomControls zoomControls = (ZoomControls)findViewById(R.id.zoomControls);
+
+            p = camera.getParameters();
+            if (p.isZoomSupported() && p.isSmoothZoomSupported()) {
+                //most phones
+
+                maxZoomLevel = p.getMaxZoom();
+
+                zoomControls.setIsZoomInEnabled(true);
+                zoomControls.setIsZoomOutEnabled(true);
+
+                zoomControls.setOnZoomInClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        if (currentZoomLevel < maxZoomLevel) {
+                            currentZoomLevel++;
+                            camera.startSmoothZoom(currentZoomLevel);
+                        }
+                    }
+                });
+                zoomControls.setOnZoomOutClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        if (currentZoomLevel > 0) {
+                            currentZoomLevel--;
+                            camera.startSmoothZoom(currentZoomLevel);
+                        }
+                    }
+                });
+            } else if (p.isZoomSupported() && !p.isSmoothZoomSupported()){
+                //stupid HTC phones
+                maxZoomLevel = p.getMaxZoom();
+
+                zoomControls.setIsZoomInEnabled(true);
+                zoomControls.setIsZoomOutEnabled(true);
+
+                zoomControls.setOnZoomInClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        if (currentZoomLevel < maxZoomLevel) {
+                            currentZoomLevel++;
+                            p.setZoom(currentZoomLevel);
+                            camera.setParameters(p);
+
+                        }
+                    }
+                });
+
+                zoomControls.setOnZoomOutClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        if (currentZoomLevel > 0) {
+                            currentZoomLevel--;
+                            p.setZoom(currentZoomLevel);
+                            camera.setParameters(p);
+                        }
+                    }
+                });
+            }else{
+                //no zoom on phone
+                zoomControls.setVisibility(View.GONE);
+            }
         } catch (Exception e) {
             // ignore: tried to stop a non-existent preview
         }
         // set preview size and make any resize, rotate or
         // reformatting changes here
         // start preview with new settings
+        camera.setParameters(p);
         try {
             camera.setPreviewDisplay(surfaceHolder);
             camera.startPreview();
@@ -146,6 +209,7 @@ if (data!=null){this.data = data; return true;}
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
         // Now that the size is known, set up the camera parameters and begin
         // the preview.
+
         refreshCamera();
     }
 
@@ -160,6 +224,7 @@ if (data!=null){this.data = data; return true;}
         }
         Camera.Parameters param;
         param = camera.getParameters();
+       // param.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         // modify parameter
         param.setPreviewSize(352, 288);
         camera.setParameters(param);
@@ -167,6 +232,7 @@ if (data!=null){this.data = data; return true;}
             // The Surface has been created, now tell the camera where to draw
             // the preview.
             camera.setDisplayOrientation(90);
+
             camera.setPreviewDisplay(surfaceHolder);
             camera.startPreview();
         } catch (Exception e) {

@@ -28,6 +28,7 @@ import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -111,11 +112,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         IconAdapter iconAdapter = new IconAdapter();
         this.mGrid.setClickable(true);
         mGrid.setAdapter(iconAdapter);
-if((wallpaperDirectory.listFiles().length<2)&(wallpaperDirectory.listFiles()[0].getName().equals(".temp"))) {
-   ImageView imageView = (ImageView)findViewById(R.id.imageView2);
-    imageView.setVisibility(View.VISIBLE);
-    imageView.setBackgroundResource(R.drawable.nothing);
-}
+
         mImageView = (ImageView) findViewById(R.id.imageView);
 
         // Attach a PhotoViewAttacher, which takes care of all of the zooming functionality.
@@ -212,6 +209,10 @@ if((wallpaperDirectory.listFiles().length<2)&(wallpaperDirectory.listFiles()[0].
         }
 
         if (mGrid != null) mGrid.setAdapter(new IconAdapter());
+        if((wallpaperDirectory.listFiles().length<2)&(wallpaperDirectory.listFiles()[0].getName().equals(".temp"))) {
+            TextView textView = (TextView)findViewById(R.id.textView);
+            textView.setVisibility(View.VISIBLE);
+        }
     }
 
 
@@ -361,7 +362,7 @@ else currentImage = (int) id - dirList.size()-1;
                                 alertDialog1.setPositiveButton("Delete",
                                         new DialogInterface.OnClickListener() {
                                             public void onClick(DialogInterface dialog, int which) {
-                                                file.delete();
+                                                DeleteRecursive(file);
                                                 browseTo(parent);
                                             }
                                         });
@@ -407,6 +408,14 @@ else currentImage = (int) id - dirList.size()-1;
                 })
                 .create().show();
         return true;
+    }
+
+    void DeleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory())
+            for (File child : fileOrDirectory.listFiles())
+                DeleteRecursive(child);
+
+        fileOrDirectory.delete();
     }
 
     public void copyDirectory(File sourceLocation, File targetLocation)
