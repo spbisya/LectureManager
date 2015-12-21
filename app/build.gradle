@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.okunev.lecturemanager"
-        minSdkVersion 19
+        minSdkVersion 17
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -24,6 +24,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.commit451:PhotoView:1.2.4'
- //   compile project(':fancybuttons_library')
     compile 'com.github.medyo:fancybuttons:1.5@aar'
 }

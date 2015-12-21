@@ -16,8 +16,52 @@
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:onClick="capture"
+        fancy:fb_fontIconResource="&#xf030;"
+        fancy:fb_fontIconSize="40dp"
+        fancy:fb_radius="40dp"
+        fancy:fb_iconPosition="left"
+        fancy:fb_ghost="true"
+        android:gravity="center"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:onClick="capture" />
+        android:layout_centerHorizontal="true" />
+
+    <mehdi.sakout.fancybuttons.FancyButton
+        android:id="@+id/recapture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        fancy:fb_fontIconResource="&#xf01e;"
+        fancy:fb_fontIconSize="40dp"
+        fancy:fb_radius="40dp"
+        fancy:fb_iconPosition="left"
+        fancy:fb_ghost="true"
+        android:visibility="invisible"
+        android:layout_alignTop="@+id/button"
+        android:layout_toEndOf="@+id/button" />
+
+    <mehdi.sakout.fancybuttons.FancyButton
+        android:id="@+id/back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        fancy:fb_fontIconResource="&#xf00d;"
+        fancy:fb_fontIconSize="50dp"
+        fancy:fb_radius="50dp"
+        fancy:fb_iconPosition="left"
+        fancy:fb_ghost="true"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true" />
+
+    <mehdi.sakout.fancybuttons.FancyButton
+        android:id="@+id/save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        fancy:fb_fontIconResource="&#xf0c7;"
+        fancy:fb_fontIconSize="40dp"
+        fancy:fb_radius="40dp"
+        fancy:fb_iconPosition="left"
+        fancy:fb_ghost="true"
+        android:layout_alignTop="@+id/button"
+        android:layout_toStartOf="@+id/button"
+        android:visibility="invisible" />
 
 </RelativeLayout>

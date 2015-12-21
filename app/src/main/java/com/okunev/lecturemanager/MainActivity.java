@@ -3,7 +3,6 @@ package com.okunev.lecturemanager;
 import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -13,16 +12,20 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import mehdi.sakout.fancybuttons.FancyButton;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback{
     Camera camera;
     SurfaceView surfaceView;
     SurfaceHolder surfaceHolder;
     Camera.PictureCallback jpegCallback;
+    FancyButton capture;
+    FancyButton cancel;
+    String path;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,27 +38,83 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         surfaceHolder.addCallback(this);
         // deprecated setting, but required on Android versions prior to 3.0
         surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        Bundle extras = getIntent().getExtras();
+        path = extras.getString("DIR");
+       /* recapture = (FancyButton)findViewById(R.id.recapture);
+        recapture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+               refreshCamera();
+                recapture.setVisibility(View.INVISIBLE);
+                save.setVisibility(View.INVISIBLE);
+            }
+        });
+*/
+        cancel = (FancyButton)findViewById(R.id.back);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, FileBrowser.class);
+                intent.putExtra("DIR", path);
+                startActivity(intent);
+            }
+        });
+
+
+   /*     save = (FancyButton)findViewById(R.id.save);
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (getData(data)) {
+                    savePic(data);
+                }
+            }
+        });*/
+
         jpegCallback = new Camera.PictureCallback() {
             public void onPictureTaken(byte[] data, Camera camera) {
-                FileOutputStream outStream = null;
-                try {
-                    File wallpaperDirectory = new File(Environment.getExternalStorageDirectory().getPath()+"/LectureManager/");
-                    wallpaperDirectory.mkdirs();
-                    outStream = new FileOutputStream(String.format(wallpaperDirectory.getPath() + "/image%d.lecture", System.currentTimeMillis()));
-                    outStream.write(data);
-                    outStream.close();
-                    Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                }
-                Toast.makeText(getApplicationContext(), "Picture Saved",Toast.LENGTH_SHORT).show();
-                refreshCamera();
+               /* recapture.setVisibility(View.VISIBLE);
+                save.setVisibility(View.VISIBLE);*/
+           //     setData(data);
+                capture = (FancyButton)findViewById(R.id.button);
+                capture.setEnabled(false);
+                savePic(data);
             }
         };
     }
+
+
+/*    public void setData(byte[] data){
+        this.data =data;
+    }
+
+    public Boolean getData(byte[] data){
+if (data!=null){this.data = data; return true;}
+        return false;
+    }*/
+
+    public void savePic(byte[] data){
+        FileOutputStream outStream = null;
+        try {
+            outStream = new FileOutputStream(String.format(path + "/image%d.lecture", System.currentTimeMillis()));
+            outStream.write(data);
+            outStream.close();
+            Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+        }
+        Toast.makeText(getApplicationContext(), "Picture Saved",Toast.LENGTH_SHORT).show();
+    //    data=null;
+        refreshCamera();
+        capture = (FancyButton)findViewById(R.id.button);
+        capture.setEnabled(true);
+      /*  recapture.setVisibility(View.INVISIBLE);
+        save.setVisibility(View.INVISIBLE);*/
+    }
+
 
 
     public void captureImage() throws IOException {

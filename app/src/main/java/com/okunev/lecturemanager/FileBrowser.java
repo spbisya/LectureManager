@@ -98,7 +98,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         temp.mkdirs();
 
         if (intent.getData() == null) browseTo(wallpaperDirectory);
-        else browseTo(new File(intent.getDataString()));
+        else  browseTo(new File(intent.getDataString()));
 
 
         display = getWindowManager().getDefaultDisplay();
@@ -117,6 +117,19 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         // Attach a PhotoViewAttacher, which takes care of all of the zooming functionality.
         mAttacher = new PhotoViewAttacher(mImageView);
         detector = new SimpleGestureFilter(this, this);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        Bundle extras = getIntent().getExtras();
+
+        try {
+            browseTo(new File(extras.getString("DIR")));
+        }
+        catch (Exception l){
+            browseTo(wallpaperDirectory);
+        }
     }
 
 
@@ -256,34 +269,6 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
 
             if (file.isDirectory()) return R.drawable.directory;
 
-            for (String ext : mAudioExt) {
-                if (file.getName().endsWith(ext)) return R.drawable.audio;
-            }
-
-            for (String ext : mArchiveExt) {
-                if (file.getName().endsWith(ext)) return R.drawable.archive;
-            }
-
-            for (String ext : mImageExt) {
-                if (file.getName().endsWith(ext)) return R.drawable.image;
-            }
-
-            for (String ext : mWebExt) {
-                if (file.getName().endsWith(ext)) return R.drawable.webdoc;
-            }
-
-            for (String ext : mTextExt) {
-                if (file.getName().endsWith(ext)) return R.drawable.text;
-            }
-
-            for (String ext : mVideoExt) {
-                if (file.getName().endsWith(ext)) return R.drawable.video;
-            }
-
-            for (String ext : mGeoPosExt) {
-                if (file.getName().endsWith(ext)) return R.drawable.geoposition;
-            }
-
             return R.drawable.unknown;
         }
 
@@ -331,17 +316,18 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                             case 0: // Rename
                                 AlertDialog.Builder alertDialog = new AlertDialog.Builder(FileBrowser.this);
                                 alertDialog.setTitle("Rename file");
-                                alertDialog.setMessage("Enter Name");
+                                alertDialog.setMessage("Enter name");
 
                                 final EditText input = new EditText(FileBrowser.this);
+                                input.setText(file.getName().replace(".lecture",""));
                                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                                         LinearLayout.LayoutParams.MATCH_PARENT,
                                         LinearLayout.LayoutParams.MATCH_PARENT);
                                 input.setLayoutParams(lp);
                                 alertDialog.setView(input);
-                                alertDialog.setIcon(R.drawable.about);
+                                alertDialog.setIcon(R.drawable.rename);
 
-                                alertDialog.setPositiveButton("YES",
+                                alertDialog.setPositiveButton("Rename",
                                         new DialogInterface.OnClickListener() {
                                             public void onClick(DialogInterface dialog, int which) {
                                                 if (!file.isDirectory())
@@ -361,8 +347,26 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                                 alertDialog.show();
                                 break;
                             case 1: // Delete
-                                file.delete();
-                                browseTo(parent);
+
+                                AlertDialog.Builder alertDialog1 = new AlertDialog.Builder(FileBrowser.this);
+                                alertDialog1.setTitle("Delete file?");
+                                alertDialog1.setIcon(R.drawable.delete);
+
+                                alertDialog1.setPositiveButton("Delete",
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                file.delete();
+                                                browseTo(parent);
+                                            }
+                                        });
+
+                                alertDialog1.setNegativeButton("Cancel",
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                dialog.cancel();
+                                            }
+                                        });
+                                alertDialog1.show();
                                 break;
                             case 2: // Cut
                                 // Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp"
@@ -471,6 +475,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         int id = item.getItemId();
         if (id == R.id.about) {
             Intent intent = new Intent(this, MainActivity.class);
+            intent.putExtra("DIR", mdir.getPath());
             startActivity(intent);
         }
         if (id == R.id.paste) {
