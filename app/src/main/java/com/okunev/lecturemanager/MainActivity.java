@@ -1,6 +1,7 @@
 package com.okunev.lecturemanager;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -198,6 +199,11 @@ if (data!=null){this.data = data; return true;}
         // set preview size and make any resize, rotate or
         // reformatting changes here
         // start preview with new settings
+        PackageManager pm = getPackageManager();
+        if(pm.hasSystemFeature(PackageManager.FEATURE_CAMERA) && pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_AUTOFOCUS)){
+            // True means the camera has autofocus mode on. Do what ever you want to do
+            p.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+        }
         camera.setParameters(p);
         try {
             camera.setPreviewDisplay(surfaceHolder);
