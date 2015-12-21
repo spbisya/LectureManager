@@ -111,7 +111,11 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         IconAdapter iconAdapter = new IconAdapter();
         this.mGrid.setClickable(true);
         mGrid.setAdapter(iconAdapter);
-
+if((wallpaperDirectory.listFiles().length<2)&(wallpaperDirectory.listFiles()[0].getName().equals(".temp"))) {
+   ImageView imageView = (ImageView)findViewById(R.id.imageView2);
+    imageView.setVisibility(View.VISIBLE);
+    imageView.setBackgroundResource(R.drawable.nothing);
+}
         mImageView = (ImageView) findViewById(R.id.imageView);
 
         // Attach a PhotoViewAttacher, which takes care of all of the zooming functionality.
@@ -293,12 +297,14 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.setDataAndType(Uri.fromFile(file), getMimeType(file));
                 startActivity(Intent.createChooser(intent, null));*/
-                currentImage = (int) id - dirList.size();
-                mImageView.setImageURI(Uri.parse(fileList.get(currentImage).getPath()));
-                mImageView.setVisibility(View.VISIBLE);
-                mImageView.setBackgroundColor(0xffffffff);
-                mAttacher.update();
 
+if (file.getParent().equals(wallpaperDirectory.getPath()))
+                currentImage = (int) id - dirList.size();
+else currentImage = (int) id - dirList.size()-1;
+    mImageView.setImageURI(Uri.parse(fileList.get(currentImage).getPath()));
+                mImageView.setVisibility(View.VISIBLE);
+    mImageView.setBackgroundColor(0xffffffff);
+    mAttacher.update();
             }
         }
     }
