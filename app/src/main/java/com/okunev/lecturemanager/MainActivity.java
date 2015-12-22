@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     int maxZoomLevel=0,currentZoomLevel=0;
     Camera.Parameters p;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

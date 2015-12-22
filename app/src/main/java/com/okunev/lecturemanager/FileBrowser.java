@@ -12,6 +12,7 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Display;
@@ -66,6 +67,8 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     private Display display;
     private SimpleGestureFilter detector;
     private String name;
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    static final int REQUEST_TAKE_PHOTO = 1;
 
     /**
      * Called when the activity is first created.
@@ -123,10 +126,8 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     @Override
     public void onResume(){
         super.onResume();
-        Bundle extras = getIntent().getExtras();
-
         try {
-            browseTo(new File(extras.getString("DIR")));
+            browseTo(mdir);
         }
         catch (Exception l){
             browseTo(wallpaperDirectory);
@@ -489,9 +490,10 @@ else currentImage = (int) id - dirList.size()-1;
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.about) {
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.putExtra("DIR", mdir.getPath());
-            startActivity(intent);
+//            Intent intent = new Intent(this, MainActivity.class);
+//            intent.putExtra("DIR", mdir.getPath());
+//            startActivity(intent);
+            dispatchTakePictureIntent(mdir);
         }
         if (id == R.id.paste) {
             File from = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/temp.lecture");
@@ -533,6 +535,42 @@ else currentImage = (int) id - dirList.size()-1;
         }
         return super.onOptionsItemSelected(item);
     }
+
+    private void dispatchTakePictureIntent(File storageDir) {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile(storageDir);
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
+                        Uri.fromFile(photoFile));
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
+    }
+
+    private File createImageFile(File storageDir) throws IOException {
+        // Create an image file name
+       String imageFileName = "lecture" + System.currentTimeMillis();
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".lecture",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+      //  mCurrentPhotoPath = "file: " + image.getAbsolutePath();
+        //   Toast.makeText(this, mCurrentPhotoPath, Toast.LENGTH_LONG).show();
+        return image;
+    }
+
 
     @Override
     public void onDestroy() {
