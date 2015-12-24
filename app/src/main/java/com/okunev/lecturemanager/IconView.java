@@ -5,17 +5,24 @@ package com.okunev.lecturemanager;
  */
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.widget.Checkable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class IconView extends LinearLayout
+public class IconView extends LinearLayout implements Checkable
 {
     private ImageView mIcon;
     private TextView mFileName;
     private Bitmap thumbs;
+    private boolean mChecked;
+
+    public IconView(Context context) {
+        super(context, null);
+    }
 
     public IconView(Context context, int iconResId, String fileName)
     {
@@ -56,6 +63,21 @@ public class IconView extends LinearLayout
         addView(mFileName, new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
     }
 
+    @Override
+    public void setChecked(boolean checked) {
+        mChecked = checked;
+        setBackgroundColor(checked ? Color.CYAN : Color.WHITE);
+    }
+
+    @Override
+    public boolean isChecked() {
+        return mChecked;
+    }
+
+    @Override
+    public void toggle() {
+        setChecked(!mChecked);
+    }
 
     public void setThumbs(Bitmap thumbs) {
         mIcon.setImageBitmap(thumbs);

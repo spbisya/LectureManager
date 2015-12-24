@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
@@ -169,7 +168,6 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                 }
                 break;
             case SimpleGestureFilter.SWIPE_UP:
-                // browseTo(mdir);
                 break;
         }
     }
@@ -220,16 +218,12 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     @Override
     public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
         int selectCount = mGrid.getCheckedItemCount();
-        if (checked) {
-            View tv = mGrid.getChildAt(position);
-            tv.setBackgroundColor(Color.RED);
-
+        if(checked){
             checkeds.add(position);
-        } else {
-            View tv = mGrid.getChildAt(position);
-            tv.setBackgroundColor(Color.WHITE);
-            mGrid.requestLayout();
-            checkeds.remove((Object) position);
+        }
+        else
+        {
+            checkeds.remove((Object)position);
         }
         switch (selectCount) {
             case 1:
@@ -256,32 +250,31 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         mode.getMenuInflater().inflate(R.menu.menu_grid, menu);
         mode.setTitle("Select Items");
         mode.setSubtitle("One item selected");
-        try {
-            View tv = mGrid.getChildAt(mGrid.getCheckedItemPosition());
-            Toast.makeText(FileBrowser.this,""+mGrid.getCheckedItemPosition(),Toast.LENGTH_LONG).show();
-            tv.setBackgroundColor(Color.RED);
-        } catch (Exception l) {
-        }
         return true;
     }
 
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-
         return true;
     }
+
+
 
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
 
         switch (item.getItemId()) {
             case R.id.cut:
+             //   Toast.makeText(FileBrowser.this, ""+checkeds.size(),Toast.LENGTH_LONG).show();
                 for (Integer position : checkeds) {
-                    final File file = mFiles.get(position - 1);
-                    cut(file);
+                    final File file = mFiles.get(position);
+                    name = file.getName();
+                    File to = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/" + name);
+                    file.renameTo(to);
                     cutted.add(file.getName());
                 }
                 checkeds.clear();
+                browseTo(mdir);
                 mode.finish();
 
                 return true;
@@ -448,6 +441,9 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         checkeds.clear();
     }
 
+
+
+
     public class IconAdapter extends BaseAdapter {
         @Override
         public int getCount() {
@@ -491,6 +487,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
 
             if (convertView == null) {
                 icon = new IconView(FileBrowser.this, iconId, filename);
@@ -632,14 +629,6 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         return true;
     }
 
-    public void cut(File file) {
-        File parent = file.getParentFile();
-        name = file.getName();
-        File to = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/" + name);
-        file.renameTo(to);
-        browseTo(parent);
-    }
-
     void DeleteRecursive(File fileOrDirectory) {
         if (fileOrDirectory.isDirectory())
             for (File child : fileOrDirectory.listFiles())
@@ -744,7 +733,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
             dispatchTakePictureIntent(mdir);
         }
         if (id == R.id.paste) {
-            File from1 = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp");
+
             File from = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/temp.lecture");
             if (from.exists()) {
                 File to = new File(mdir.getPath() + "/" + name);
@@ -752,7 +741,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                     to = new File(mdir.getPath() + "/" + name.replace(".lecture", "") + "-Copy.lecture");
                 from.renameTo(to);
                 browseTo(mdir);
-            } else if (from1.listFiles().length > 1) {
+            } else {
                 for (String name : cutted) {
                     File cutting = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/" + name);
                     File to = new File(mdir.getPath() + "/" + name);
