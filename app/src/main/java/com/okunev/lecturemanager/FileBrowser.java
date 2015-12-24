@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.ActionMode;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -45,17 +47,10 @@ import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class FileBrowser extends AppCompatActivity implements AdapterView.OnItemClickListener,
         AdapterView.OnItemLongClickListener, AdapterView.OnItemSelectedListener,
-        SimpleGestureFilter.SimpleGestureListener {
+        SimpleGestureFilter.SimpleGestureListener, GridView.MultiChoiceModeListener {
     private GridView mGrid;
     private File mCurrentDir;
     private ArrayList<File> mFiles;
-    private String[] mAudioExt;
-    private String[] mImageExt;
-    private String[] mArchiveExt;
-    private String[] mWebExt;
-    private String[] mTextExt;
-    private String[] mVideoExt;
-    private String[] mGeoPosExt;
     private boolean mStandAlone;
     private IconView mLastSelected;
     private ArrayList<File> dirList = new ArrayList<>();
@@ -67,8 +62,9 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     private Display display;
     private SimpleGestureFilter detector;
     private String name;
-    static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int REQUEST_TAKE_PHOTO = 1;
+    private ArrayList<Integer> checkeds = new ArrayList<>();
+    private ArrayList<String> cutted = new ArrayList<>();
 
     /**
      * Called when the activity is first created.
@@ -79,14 +75,6 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         setContentView(R.layout.file_manager);
         mFiles = new ArrayList<>();
 
-        mAudioExt = getResources().getStringArray(R.array.fileEndingAudio);
-        mImageExt = getResources().getStringArray(R.array.fileEndingImage);
-        mArchiveExt = getResources().getStringArray(R.array.fileEndingPackage);
-        mWebExt = getResources().getStringArray(R.array.fileEndingWebText);
-        mTextExt = getResources().getStringArray(R.array.fileEndingText);
-        mVideoExt = getResources().getStringArray(R.array.fileEndingVideo);
-        mGeoPosExt = getResources().getStringArray(R.array.fileEndingGeoPosition);
-
         Intent intent = getIntent();
         String action = intent.getAction();
 
@@ -95,45 +83,52 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         else
             mStandAlone = false;
 
-
         wallpaperDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/");
         wallpaperDirectory.mkdirs();
         File temp = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp");
         temp.mkdirs();
 
         if (intent.getData() == null) browseTo(wallpaperDirectory);
-        else  browseTo(new File(intent.getDataString()));
-
+        else browseTo(new File(intent.getDataString()));
 
         display = getWindowManager().getDefaultDisplay();
 
         mGrid = (GridView) findViewById(R.id.gridView);
-        mGrid.setNumColumns(display.getWidth() / 60);
+       /* if(display.getWidth()>1000){
+            mGrid.setNumColumns(5);
+        }
+        else*/
+        mGrid.setNumColumns(5);
         mGrid.setOnItemClickListener(this);
         mGrid.setOnItemLongClickListener(this);
         mGrid.setOnItemSelectedListener(this);
         IconAdapter iconAdapter = new IconAdapter();
         this.mGrid.setClickable(true);
         mGrid.setAdapter(iconAdapter);
-
+        mGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
+        mGrid.setMultiChoiceModeListener(this);
         mImageView = (ImageView) findViewById(R.id.imageView);
-
         // Attach a PhotoViewAttacher, which takes care of all of the zooming functionality.
         mAttacher = new PhotoViewAttacher(mImageView);
         detector = new SimpleGestureFilter(this, this);
     }
 
+    public void reCreateTemp() {
+        File from = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp");
+        DeleteRecursive(from);
+        File temp = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp");
+        temp.mkdirs();
+    }
+
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         try {
             browseTo(mdir);
-        }
-        catch (Exception l){
+        } catch (Exception l) {
             browseTo(wallpaperDirectory);
         }
     }
-
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent me) {
@@ -146,31 +141,35 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     public void onSwipe(int direction) {
         switch (direction) {
             case SimpleGestureFilter.SWIPE_RIGHT:
-                if (currentImage > 0) currentImage -= 1;
-                else currentImage = fileList.size() - 1;
-                mImageView.setImageURI(Uri.parse(fileList.get(currentImage).getPath()));
-                mImageView.setBackgroundColor(0xffffffff);
-                mAttacher.update();
+                if (mImageView.getVisibility() == View.VISIBLE) {
+                    if (currentImage > 0) currentImage -= 1;
+                    else currentImage = fileList.size() - 1;
+                    mImageView.setImageURI(Uri.parse(fileList.get(currentImage).getPath()));
+                    mImageView.setBackgroundColor(0xffffffff);
+                    mAttacher.update();
+                }
                 break;
             case SimpleGestureFilter.SWIPE_LEFT:
-                if (currentImage < fileList.size() - 1) currentImage++;
-                else currentImage = 0;
-                mImageView.setImageURI(Uri.parse(fileList.get(currentImage).getPath()));
-                mImageView.setBackgroundColor(0xffffffff);
-                mAttacher.update();
+                if (mImageView.getVisibility() == View.VISIBLE) {
+                    if (currentImage < fileList.size() - 1) currentImage++;
+                    else currentImage = 0;
+                    mImageView.setImageURI(Uri.parse(fileList.get(currentImage).getPath()));
+                    mImageView.setBackgroundColor(0xffffffff);
+                    mAttacher.update();
+                }
                 break;
             case SimpleGestureFilter.SWIPE_DOWN:
-                Animation anim = AnimationUtils.loadAnimation(this, R.anim.img_anim);
-//Animation animation = new ScaleAnimation(1.0f,0.0f,1.0f,1.0f,Animation.RELATIVE_TO_PARENT,0.5f,Animation.RELATIVE_TO_PARENT,0.5f);
-                //animation.setDuration(300);
-                mImageView.setAnimation(anim);
-                mImageView.startAnimation(anim);
-                mImageView.setVisibility(View.INVISIBLE);
-                mAttacher.update();
-                browseTo(wallpaperDirectory);
+                if (mImageView.getVisibility() == View.VISIBLE) {
+                    Animation anim = AnimationUtils.loadAnimation(this, R.anim.img_anim);
+                    mImageView.setAnimation(anim);
+                    mImageView.startAnimation(anim);
+                    mImageView.setVisibility(View.INVISIBLE);
+                    mAttacher.update();
+                    browseTo(mdir);
+                }
                 break;
             case SimpleGestureFilter.SWIPE_UP:
-                browseTo(mdir);
+                // browseTo(mdir);
                 break;
         }
     }
@@ -188,6 +187,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
 
         this.setTitle(mCurrentDir.getName().compareTo("") == 0 ? mCurrentDir.getPath() : mCurrentDir.getName());
         mdir = mCurrentDir;
+
         if (!location.getParentFile().getPath().equals(Environment.getExternalStorageDirectory().getPath())) {
             mFiles.add(mCurrentDir.getParentFile());
             mdir = mCurrentDir;
@@ -205,17 +205,248 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         for (File fik : dirList) {
             mFiles.add(fik);
         }
+
         for (File fik : fileList) {
             mFiles.add(fik);
         }
 
         if (mGrid != null) mGrid.setAdapter(new IconAdapter());
-        if((wallpaperDirectory.listFiles().length<2)&(wallpaperDirectory.listFiles()[0].getName().equals(".temp"))) {
-            TextView textView = (TextView)findViewById(R.id.textView);
+        if ((wallpaperDirectory.listFiles().length < 2) & (wallpaperDirectory.listFiles()[0].getName().equals(".temp"))) {
+            TextView textView = (TextView) findViewById(R.id.textView);
             textView.setVisibility(View.VISIBLE);
         }
     }
 
+    @Override
+    public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+        int selectCount = mGrid.getCheckedItemCount();
+        if (checked) {
+            View tv = mGrid.getChildAt(position);
+            tv.setBackgroundColor(Color.RED);
+
+            checkeds.add(position);
+        } else {
+            View tv = mGrid.getChildAt(position);
+            tv.setBackgroundColor(Color.WHITE);
+            mGrid.requestLayout();
+            checkeds.remove((Object) position);
+        }
+        switch (selectCount) {
+            case 1:
+                mode.setSubtitle("One item selected");
+                mode.getMenu().findItem(R.id.actions).setVisible(true);
+                mode.getMenu().findItem(R.id.copy).setVisible(false);
+                mode.getMenu().findItem(R.id.cut).setVisible(false);
+                mode.getMenu().findItem(R.id.delete).setVisible(false);
+                mode.getMenu().findItem(R.id.sendto).setVisible(false);
+                break;
+            default:
+                mode.getMenu().findItem(R.id.actions).setVisible(false);
+                mode.getMenu().findItem(R.id.copy).setVisible(true);
+                mode.getMenu().findItem(R.id.cut).setVisible(true);
+                mode.getMenu().findItem(R.id.delete).setVisible(true);
+                mode.getMenu().findItem(R.id.sendto).setVisible(true);
+                mode.setSubtitle("" + selectCount + " items selected");
+                break;
+        }
+    }
+
+    @Override
+    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+        mode.getMenuInflater().inflate(R.menu.menu_grid, menu);
+        mode.setTitle("Select Items");
+        mode.setSubtitle("One item selected");
+        try {
+            View tv = mGrid.getChildAt(mGrid.getCheckedItemPosition());
+            Toast.makeText(FileBrowser.this,""+mGrid.getCheckedItemPosition(),Toast.LENGTH_LONG).show();
+            tv.setBackgroundColor(Color.RED);
+        } catch (Exception l) {
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+
+        return true;
+    }
+
+    @Override
+    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.cut:
+                for (Integer position : checkeds) {
+                    final File file = mFiles.get(position - 1);
+                    cut(file);
+                    cutted.add(file.getName());
+                }
+                checkeds.clear();
+                mode.finish();
+
+                return true;
+            case R.id.sendto:
+                Intent intent = new Intent();
+                intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+                intent.putExtra(Intent.EXTRA_SUBJECT, "Files to send");
+                intent.setType("image/jpeg"); /* This example is sharing jpeg images. */
+
+                ArrayList<Uri> files = new ArrayList<Uri>();
+                for (Integer position : checkeds) {
+                    final File file = mFiles.get(position);
+                    if (!file.isDirectory()) {
+                        Uri uri = Uri.fromFile(file);
+                        files.add(uri);
+                    }
+                }
+                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
+                startActivity(intent);
+                checkeds.clear();
+                mode.finish();
+                return true;
+            case R.id.copy:
+                for (Integer position : checkeds) {
+                    final File file = mFiles.get(position);
+                    name = file.getName();
+                    File temped = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/" + name);
+                    try {
+                        copyDirectory(file, temped);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    cutted.add(file.getName());
+                }
+                checkeds.clear();
+                mode.finish();
+                return true;
+            case R.id.delete:
+                AlertDialog.Builder alertDialog1 = new AlertDialog.Builder(FileBrowser.this);
+                alertDialog1.setTitle("Delete files?");
+                alertDialog1.setIcon(R.drawable.delete);
+                alertDialog1.setPositiveButton("Delete",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                for (Integer position : checkeds) {
+                                    final File file = mFiles.get(position);
+                                    DeleteRecursive(file);
+                                }
+                                browseTo(mdir);
+                            }
+                        });
+                alertDialog1.setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        });
+                alertDialog1.show();
+                checkeds.clear();
+                mode.finish();
+                return true;
+            case R.id.actions:
+                final File file = mFiles.get(checkeds.get(0));
+                final File parent = file.getParentFile();
+
+                new AlertDialog.Builder(FileBrowser.this)
+                        .setIcon(android.R.drawable.ic_menu_agenda)
+                        .setItems(R.array.file_options, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                switch (whichButton) {
+                                    case 0: // Rename
+                                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(FileBrowser.this);
+                                        alertDialog.setTitle("Rename file");
+                                        alertDialog.setMessage("Enter name");
+
+                                        final EditText input = new EditText(FileBrowser.this);
+                                        input.setText(file.getName().replace(".lecture", ""));
+                                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                                LinearLayout.LayoutParams.MATCH_PARENT);
+                                        input.setLayoutParams(lp);
+                                        alertDialog.setView(input);
+                                        alertDialog.setIcon(R.drawable.rename);
+
+                                        alertDialog.setPositiveButton("Rename",
+                                                new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        if (!file.isDirectory())
+                                                            file.renameTo(new File(parent, input.getText().toString() + ".lecture"));
+                                                        else
+                                                            file.renameTo(new File(parent, input.getText().toString()));
+                                                        browseTo(parent);
+                                                    }
+                                                });
+
+                                        alertDialog.setNegativeButton("Cancel",
+                                                new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        dialog.cancel();
+                                                    }
+                                                });
+                                        alertDialog.show();
+                                        break;
+                                    case 1: // Delete
+                                        AlertDialog.Builder alertDialog1 = new AlertDialog.Builder(FileBrowser.this);
+                                        alertDialog1.setTitle("Delete file?");
+                                        alertDialog1.setIcon(R.drawable.delete);
+
+                                        alertDialog1.setPositiveButton("Delete",
+                                                new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        DeleteRecursive(file);
+                                                        browseTo(parent);
+                                                    }
+                                                });
+
+                                        alertDialog1.setNegativeButton("Cancel",
+                                                new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        dialog.cancel();
+                                                    }
+                                                });
+                                        alertDialog1.show();
+                                        break;
+                                    case 2: // Cut
+                                        name = file.getName();
+                                        File to = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/temp.lecture");
+                                        file.renameTo(to);
+                                        browseTo(parent);
+                                        break;
+                                    case 3: // Copy
+                                        name = file.getName();
+                                        File temped = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/temp.lecture");
+                                        try {
+                                            copyDirectory(file, temped);
+                                            Toast.makeText(FileBrowser.this, "Copied!", Toast.LENGTH_LONG).show();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                        browseTo(parent);
+                                        break;
+                                    case 4: // Send To...
+                                        Intent intent = new Intent(Intent.ACTION_SEND);
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        intent.setType("image/jpeg");
+                                        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+                                        startActivity(Intent.createChooser(intent, null));
+                                        break;
+                                }
+                                dialog.dismiss();
+                            }
+                        })
+                        .create().show();
+                checkeds.clear();
+                mode.finish();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public void onDestroyActionMode(ActionMode mode) {
+        checkeds.clear();
+    }
 
     public class IconAdapter extends BaseAdapter {
         @Override
@@ -248,9 +479,11 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                 filename = currentFile.getName();
                 iconId = getIconId(index);
             }
-            if (currentFile.getName().endsWith(".jpg") || currentFile.getName().endsWith(".lecture"))
+            if (currentFile.getName().endsWith(".lecture"))
                 try {
-                    final int THUMBSIZE = 64;
+
+                    final int THUMBSIZE = display.getWidth() / mGrid.getNumColumns();
+                    //  final int HEIGHT = display.getWidth()/mGrid.getNumColumns();
                     Bitmap allah = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(currentFile.getPath()),
                             THUMBSIZE, THUMBSIZE);
                     icon = new IconView(FileBrowser.this, allah, filename);
@@ -272,9 +505,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
 
         private int getIconId(int index) {
             File file = mFiles.get(index);
-
             if (file.isDirectory()) return R.drawable.directory;
-
             return R.drawable.unknown;
         }
 
@@ -294,19 +525,13 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                 setResult(RESULT_OK, intent);
                 finish();
             } else {
-                // Try to open it
-               /* Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setDataAndType(Uri.fromFile(file), getMimeType(file));
-                startActivity(Intent.createChooser(intent, null));*/
-
-if (file.getParent().equals(wallpaperDirectory.getPath()))
-                currentImage = (int) id - dirList.size();
-else currentImage = (int) id - dirList.size()-1;
-    mImageView.setImageURI(Uri.parse(fileList.get(currentImage).getPath()));
+                if (file.getParent().equals(wallpaperDirectory.getPath()))
+                    currentImage = (int) id - dirList.size();
+                else currentImage = (int) id - dirList.size() - 1;
+                mImageView.setImageURI(Uri.parse(fileList.get(currentImage).getPath()));
                 mImageView.setVisibility(View.VISIBLE);
-    mImageView.setBackgroundColor(0xffffffff);
-    mAttacher.update();
+                mImageView.setBackgroundColor(0xffffffff);
+                mAttacher.update();
             }
         }
     }
@@ -327,7 +552,7 @@ else currentImage = (int) id - dirList.size()-1;
                                 alertDialog.setMessage("Enter name");
 
                                 final EditText input = new EditText(FileBrowser.this);
-                                input.setText(file.getName().replace(".lecture",""));
+                                input.setText(file.getName().replace(".lecture", ""));
                                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                                         LinearLayout.LayoutParams.MATCH_PARENT,
                                         LinearLayout.LayoutParams.MATCH_PARENT);
@@ -355,7 +580,6 @@ else currentImage = (int) id - dirList.size()-1;
                                 alertDialog.show();
                                 break;
                             case 1: // Delete
-
                                 AlertDialog.Builder alertDialog1 = new AlertDialog.Builder(FileBrowser.this);
                                 alertDialog1.setTitle("Delete file?");
                                 alertDialog1.setIcon(R.drawable.delete);
@@ -377,19 +601,16 @@ else currentImage = (int) id - dirList.size()-1;
                                 alertDialog1.show();
                                 break;
                             case 2: // Cut
-                                // Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp"
                                 name = file.getName();
                                 File to = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/temp.lecture");
                                 file.renameTo(to);
                                 browseTo(parent);
-                                // mGrid.removeViewAt((int) id);
                                 break;
                             case 3: // Copy
                                 name = file.getName();
-                                File copied = file;
                                 File temped = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/temp.lecture");
                                 try {
-                                    copyDirectory(copied, temped);
+                                    copyDirectory(file, temped);
                                     Toast.makeText(FileBrowser.this, "Copied!", Toast.LENGTH_LONG).show();
                                 } catch (IOException e) {
                                     e.printStackTrace();
@@ -411,11 +632,18 @@ else currentImage = (int) id - dirList.size()-1;
         return true;
     }
 
+    public void cut(File file) {
+        File parent = file.getParentFile();
+        name = file.getName();
+        File to = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/" + name);
+        file.renameTo(to);
+        browseTo(parent);
+    }
+
     void DeleteRecursive(File fileOrDirectory) {
         if (fileOrDirectory.isDirectory())
             for (File child : fileOrDirectory.listFiles())
                 DeleteRecursive(child);
-
         fileOrDirectory.delete();
     }
 
@@ -459,7 +687,6 @@ else currentImage = (int) id - dirList.size()-1;
         if (mLastSelected != null) {
             mLastSelected.deselect();
         }
-
         if (icon != null) {
             mLastSelected = (IconView) icon;
             mLastSelected.select();
@@ -483,23 +710,67 @@ else currentImage = (int) id - dirList.size()-1;
 
     @Override
     public void onBackPressed() {
-        mImageView.setVisibility(View.INVISIBLE);
+        if (mImageView.getVisibility() == View.VISIBLE)
+            mImageView.setVisibility(View.INVISIBLE);
+        else if (!mdir.getPath().equals(wallpaperDirectory.getPath()))
+            browseTo(mdir.getParentFile());
+        else if (mdir.getPath().equals(wallpaperDirectory.getPath())) {
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(FileBrowser.this);
+            alertDialog.setTitle("Exit?");
+            alertDialog.setIcon(R.drawable.exit);
+
+            alertDialog.setPositiveButton("YES",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
+
+            alertDialog.setNegativeButton("NO",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    });
+
+            alertDialog.show();
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.about) {
-//            Intent intent = new Intent(this, MainActivity.class);
-//            intent.putExtra("DIR", mdir.getPath());
-//            startActivity(intent);
             dispatchTakePictureIntent(mdir);
         }
         if (id == R.id.paste) {
+            File from1 = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp");
             File from = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/temp.lecture");
-            File to = new File(mdir.getPath() + "/" + name);
-            from.renameTo(to);
-            browseTo(mdir);
+            if (from.exists()) {
+                File to = new File(mdir.getPath() + "/" + name);
+                if (to.exists())
+                    to = new File(mdir.getPath() + "/" + name.replace(".lecture", "") + "-Copy.lecture");
+                from.renameTo(to);
+                browseTo(mdir);
+            } else if (from1.listFiles().length > 1) {
+                for (String name : cutted) {
+                    File cutting = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/" + name);
+                    File to = new File(mdir.getPath() + "/" + name);
+                    if (cutting.isDirectory()) {
+                        if (to.exists())
+                            to = new File(mdir.getPath() + "/" + name + "-Copy");
+                        cutting.renameTo(to);
+                        browseTo(mdir);
+                    } else {
+                        if (to.exists())
+                            to = new File(mdir.getPath() + "/" + name.replace(".lecture", "") + "-Copy.lecture");
+                        cutting.renameTo(to);
+                        browseTo(mdir);
+                    }
+                }
+            }
+            cutted.clear();
+            reCreateTemp();
         }
         if (id == R.id.newf) {
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(FileBrowser.this);
@@ -558,25 +829,20 @@ else currentImage = (int) id - dirList.size()-1;
 
     private File createImageFile(File storageDir) throws IOException {
         // Create an image file name
-       String imageFileName = "lecture" + System.currentTimeMillis();
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".lecture",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        // Save a file: path for use with ACTION_VIEW intents
-      //  mCurrentPhotoPath = "file: " + image.getAbsolutePath();
-        //   Toast.makeText(this, mCurrentPhotoPath, Toast.LENGTH_LONG).show();
-        return image;
+        String imageFileName = String.format("image%d.lecture", System.currentTimeMillis());
+        File result;
+        do {
+            result = new File(storageDir, imageFileName);
+        } while (!result.createNewFile());
+        return result;
+        // return image;
     }
-
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         name = "";
-        File from = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp/temp.lecture");
-        if (from.exists()) from.delete();
+        File from = new File(Environment.getExternalStorageDirectory().getPath() + "/LectureManager/.temp");
+        DeleteRecursive(from);
     }
 }

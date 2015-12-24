@@ -25,5 +25,4 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.commit451:PhotoView:1.2.4'
     compile 'com.github.medyo:fancybuttons:1.5@aar'
-
 }

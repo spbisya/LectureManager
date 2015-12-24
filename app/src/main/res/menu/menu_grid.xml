@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/actions"
+        android:icon="@drawable/new_file"
+        app:showAsAction="never"
+        android:title="Actions">
+    </item>
+    <item
+        android:id="@+id/copy"
+        app:showAsAction="never"
+        android:icon="@drawable/new_file"
+        android:title="Copy">
+    </item>
+    <item
+        android:id="@+id/cut"
+        android:icon="@drawable/new_file"
+        app:showAsAction="never"
+        android:title="Cut">
+    </item>
+    <item
+        android:id="@+id/delete"
+        android:icon="@drawable/delete"
+        app:showAsAction="never"
+        android:title="Delete">
+    </item>
+    <item
+        android:id="@+id/sendto"
+        android:icon="@drawable/new_file"
+        app:showAsAction="never"
+        android:title="Send to">
+    </item>
+
+</menu>
