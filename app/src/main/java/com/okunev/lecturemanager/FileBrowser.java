@@ -42,6 +42,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import hugo.weaving.DebugLog;
 import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class FileBrowser extends AppCompatActivity implements AdapterView.OnItemClickListener,
@@ -176,6 +177,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     public void onDoubleTap() {
     }
 
+    @DebugLog
     private synchronized void browseTo(final File location) {
         mCurrentDir = location;
 
@@ -218,12 +220,10 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     @Override
     public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
         int selectCount = mGrid.getCheckedItemCount();
-        if(checked){
+        if (checked) {
             checkeds.add(position);
-        }
-        else
-        {
-            checkeds.remove((Object)position);
+        } else {
+            checkeds.remove((Object) position);
         }
         switch (selectCount) {
             case 1:
@@ -259,13 +259,12 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     }
 
 
-
     @Override
     public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
 
         switch (item.getItemId()) {
             case R.id.cut:
-             //   Toast.makeText(FileBrowser.this, ""+checkeds.size(),Toast.LENGTH_LONG).show();
+                //   Toast.makeText(FileBrowser.this, ""+checkeds.size(),Toast.LENGTH_LONG).show();
                 for (Integer position : checkeds) {
                     final File file = mFiles.get(position);
                     name = file.getName();
@@ -440,8 +439,6 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     public void onDestroyActionMode(ActionMode mode) {
         checkeds.clear();
     }
-
-
 
 
     public class IconAdapter extends BaseAdapter {
@@ -699,9 +696,10 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
 
     @Override
     public void onBackPressed() {
-        if (mImageView.getVisibility() == View.VISIBLE)
+        if (mImageView.getVisibility() == View.VISIBLE) {
             mImageView.setVisibility(View.INVISIBLE);
-        else if (!mdir.getPath().equals(wallpaperDirectory.getPath()))
+            browseTo(mdir);
+        } else if (!mdir.getPath().equals(wallpaperDirectory.getPath()))
             browseTo(mdir.getParentFile());
         else if (mdir.getPath().equals(wallpaperDirectory.getPath())) {
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(FileBrowser.this);
