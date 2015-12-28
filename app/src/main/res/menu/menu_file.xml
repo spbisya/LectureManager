@@ -3,20 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto" tools:context=".FileBrowser">
     <item
         android:id="@+id/newf"
-        android:icon="@drawable/new_file"
+        android:icon="@drawable/ic_create_new_folder_white_48dp"
         app:showAsAction="ifRoom"
         android:title="New folder">
     </item>
     <item
         android:id="@+id/about"
         app:showAsAction="always"
-        android:icon="@drawable/camera"
+        android:icon="@drawable/ic_camera_enhance_white_48dp"
         android:title="New lecture">
     </item>
     <item
         android:id="@+id/paste"
         app:showAsAction="ifRoom"
-        android:icon="@drawable/paste"
+        android:icon="@drawable/ic_content_paste_white_48dp"
         android:title="Paste">
     </item>
 

@@ -27,4 +27,6 @@ dependencies {
     compile 'com.commit451:PhotoView:1.2.4'
     compile 'com.github.medyo:fancybuttons:1.5@aar'
     compile 'com.jakewharton.timber:timber:4.1.0'
+    compile 'de.hdodenhof:circleimageview:2.0.0'
+    compile 'com.makeramen:roundedimageview:2.2.1'
 }

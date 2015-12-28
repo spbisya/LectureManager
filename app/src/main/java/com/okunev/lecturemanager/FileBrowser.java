@@ -6,6 +6,7 @@ package com.okunev.lecturemanager;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
@@ -65,6 +66,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
     static final int REQUEST_TAKE_PHOTO = 1;
     private ArrayList<Integer> checkeds = new ArrayList<>();
     private ArrayList<String> cutted = new ArrayList<>();
+    Resources res;
 
     /**
      * Called when the activity is first created.
@@ -74,7 +76,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_manager);
         mFiles = new ArrayList<>();
-
+res=this.getBaseContext().getResources();
         Intent intent = getIntent();
         String action = intent.getAction();
 
@@ -107,10 +109,12 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
         mGrid.setAdapter(iconAdapter);
         mGrid.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
         mGrid.setMultiChoiceModeListener(this);
+      //  mGrid.setBackgroundColor(Color.parseColor("#443A66"));
         mImageView = (ImageView) findViewById(R.id.imageView);
         // Attach a PhotoViewAttacher, which takes care of all of the zooming functionality.
         mAttacher = new PhotoViewAttacher(mImageView);
         detector = new SimpleGestureFilter(this, this);
+
     }
 
     public void reCreateTemp() {
@@ -468,11 +472,13 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
             if (index == 0 && (!mCurrentDir.getAbsolutePath().equals(Environment.getExternalStorageDirectory().getPath() + "/LectureManager"))) {
                 iconId = R.drawable.updirectory;
                 filename = new String("..");
+                icon = new IconView(FileBrowser.this, iconId, filename, true);
+                return icon;
             } else {
                 filename = currentFile.getName();
                 iconId = getIconId(index);
             }
-            if (currentFile.getName().endsWith(".lecture"))
+            if (currentFile.getName().endsWith(".lecture")&(!currentFile.isDirectory()))
                 try {
 
                     final int THUMBSIZE = display.getWidth() / mGrid.getNumColumns();
@@ -484,7 +490,15 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
+            else
+if(currentFile.isDirectory()){
+    final int THUMBSIZE = display.getWidth() / mGrid.getNumColumns();
+    //  final int HEIGHT = display.getWidth()/mGrid.getNumColumns();
+    Bitmap allah = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeResource(res,R.drawable.folder1),
+            THUMBSIZE, THUMBSIZE);
+    icon = new IconView(FileBrowser.this, allah, filename);
+    return icon;
+}
 
             if (convertView == null) {
                 icon = new IconView(FileBrowser.this, iconId, filename);
@@ -499,7 +513,7 @@ public class FileBrowser extends AppCompatActivity implements AdapterView.OnItem
 
         private int getIconId(int index) {
             File file = mFiles.get(index);
-            if (file.isDirectory()) return R.drawable.directory;
+            if (file.isDirectory()) return R.drawable.ic_folder_white_48dp;
             return R.drawable.unknown;
         }
 
